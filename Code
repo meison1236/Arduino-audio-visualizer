@@ -1,0 +1,116 @@
+
+
+#include <LedControl.h> 
+#include <FixFFT.h>      
+
+int DIN = 12;  
+int CLK = 11;  
+int CS = 10;   
+LedControl lc = LedControl(DIN, CLK, CS, 1); 
+
+
+#define AUX_PIN A0       
+
+#define SAMPLES 64       /
+char im[SAMPLES];        
+char data[SAMPLES];      
+int bass, mid, high;     
+
+
+int mode = 0;            
+const int brightness = 8; 
+
+
+void setup() {
+
+  lc.shutdown(0, false);     
+  lc.setIntensity(0, brightness);
+  lc.clearDisplay(0);        
+
+  
+  pinMode(AUX_PIN, INPUT);  
+}
+
+
+void loop() {
+ checkModeChange(); 
+  readAudio();          
+  updateDisplay();     
+  delay(50);             
+}
+
+void checkModeChange() {
+  static unsigned long lastPress = 0;
+  if (digitalRead(MODE_BUTTON) return
+
+}
+
+void changeMode(int newMode) {
+  mode = newMode;
+  lc.clearDisplay(0);
+}
+
+
+void readAudio() {
+ 
+  for (int i = 0; i < SAMPLES; i++) {
+    int rawSignal = analogRead(AUX_PIN); 
+    data[i] = (rawSignal - 512) / 4;     
+    im[i] = 0;                           
+    delayMicroseconds(50);              
+  }
+
+  
+  fix_fft(data, im, 6, 0); 
+
+ 
+  bass = 0; mid = 0; high = 0;
+  for (int i = 0; i < SAMPLES / 2; i++) {
+    int amplitude = sqrt(data[i] * data[i] + im[i] * im[i]); 
+    if (i < 4) bass += amplitude;        
+    else if (i < 16) mid += amplitude;   
+    else high += amplitude;              
+  }
+  
+  bass = map(bass, 0, 500, 0, 7);
+  mid = map(mid, 0, 1000, 0, 7);
+  high = map(high, 0, 800, 0, 7);
+}
+
+
+void updateDisplay() {
+  switch (mode) {
+    case 0: 
+      for (int row = 0; row < 8; row++) {
+        if (row <= bass) {
+          for (int col = 0; col < 8; col++) {
+            lc.setLed(0, row, col, true); 
+          }
+        }
+      }
+      break;
+
+    case 1: 
+      for (int col = 0; col < 8; col++) {
+        if (col < 3) { 
+          for (int row = 7; row > 7 - bass; row--) lc.setLed(0, row, col, true);
+        }
+        else if (col < 6) { 
+          for (int row = 7; row > 7 - mid; row--) lc.setLed(0, row, col, true);
+        }
+        else { 
+          for (int row = 7; row > 7 - high; row--) lc.setLed(0, row, col, true);
+        }
+      }
+      break;
+
+    case 2: 
+      for (int row = 0; row < 8; row++) {
+        if (row < bass) lc.setLed(0, row, 0, true); 
+        if (row < mid) lc.setLed(0, row, 4, true);  
+        if (row < high) lc.setLed(0, row, 7, true); 
+      }
+      break;
+  }
+}
+
