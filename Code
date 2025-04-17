@@ -1,5 +1,4 @@
 
-
 #include <LedControl.h> 
 #include <FixFFT.h>      
 
@@ -11,7 +10,7 @@ LedControl lc = LedControl(DIN, CLK, CS, 1);
 
 #define AUX_PIN A0       
 
-#define SAMPLES 64       /
+#define SAMPLES 64     
 char im[SAMPLES];        
 char data[SAMPLES];      
 int bass, mid, high;     
